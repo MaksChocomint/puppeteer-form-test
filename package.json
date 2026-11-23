@@ -1,0 +1,19 @@
+{
+  "name": "puppeteer-form-test",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --disable-warning=ExperimentalWarning --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --verbose"
+  },
+  "jest": {
+    "transform": {},
+    "testTimeout": 60000
+  },
+  "devDependencies": {
+    "jest": "30.5.2",
+    "puppeteer": "25.18.1"
+  }
+}
