@@ -1,0 +1,64 @@
+name: Запись скринкаста
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  record:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      PUPPETEER_SKIP_DOWNLOAD: "true"
+      FORCE_COLOR: "1"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - run: npm install --ignore-scripts
+      - name: Подготовить экран
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends xvfb xauth xterm openbox ffmpeg fonts-dejavu-core
+      - name: Запустить Jest и записать экран
+        run: |
+          export PUPPETEER_EXECUTABLE_PATH="$(command -v google-chrome)"
+          export TEST_STATUS_PATH="$RUNNER_TEMP/test-exit-status"
+          xvfb-run -a -s "-screen 0 1280x800x24" bash -eu <<'RECORD'
+          openbox >/dev/null 2>&1 &
+          sleep 1
+          ffmpeg -nostdin -y -loglevel error -f x11grab -framerate 25 \
+            -video_size 1280x800 -i "$DISPLAY" -c:v libx264 -preset fast \
+            -crf 20 -pix_fmt yuv420p -movflags +faststart screencast.mp4 &
+          recording_pid=$!
+          trap 'kill -INT "$recording_pid" 2>/dev/null || true; wait "$recording_pid" || true' EXIT
+          sleep 1
+          xterm -u8 -geometry '112x11+30+555' -fa 'DejaVu Sans Mono' -fs 12 \
+            -bg '#102034' -fg '#e5edf8' -T 'Jest / Puppeteer' -e bash -c '
+              printf "\$ npm test\n\n"
+              sleep 1
+              npm test 2>&1 | tee test-output.txt
+              status=${PIPESTATUS[0]}
+              sleep 4
+              printf "%s\n" "$status" > "$TEST_STATUS_PATH"
+            '
+          cat test-output.txt
+          test "$(cat "$TEST_STATUS_PATH")" = 0
+          RECORD
+          ffprobe -v error -show_entries format=duration -of csv=p=0 screencast.mp4
+      - name: Сохранить скринкаст
+        uses: actions/upload-artifact@v7
+        with:
+          path: screencast.mp4
+          archive: false
+          if-no-files-found: error
+      - name: Сохранить lock-файл
+        uses: actions/upload-artifact@v7
+        with:
+          path: package-lock.json
+          archive: false
+          if-no-files-found: error
