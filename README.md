@@ -4,7 +4,9 @@ Jest и Puppeteer проверяют [учебную форму приветст
 
 ## Скринкаст
 
-[Посмотреть скринкаст MP4](screencast.mp4)
+[Скачать скринкаст из GitHub Actions](https://github.com/MaksChocomint/puppeteer-form-test/actions/runs/45251370142#artifacts)
+
+В разделе **Artifacts** откройте `screencast.mp4`. Для скачивания GitHub просит войти в аккаунт.
 
 В прогоне проверяются четыре имени — Анна, Илья, Анна-Мария и Alex. Итог Jest виден в терминале.
 
